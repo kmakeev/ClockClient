@@ -1,0 +1,3 @@
+title=Clock
+author=K.P. Makeev
+orientation=portrait
