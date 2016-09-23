@@ -16,6 +16,7 @@ class TubesClock(EventDispatcher):
     _alarmHH = StringProperty('--')
     _alarmMM = StringProperty('--')
     isConnected = BooleanProperty(False)
+    _tC = StringProperty('--')
 
     isLedsOn = BooleanProperty(False)
     isTubesOn = BooleanProperty(False)
@@ -24,6 +25,12 @@ class TubesClock(EventDispatcher):
 
     btn1Press = BooleanProperty(False)
     btn2Press = BooleanProperty(False)
+
+    saveTime = BooleanProperty(False)
+    saveDate = BooleanProperty(False)
+
+    isTimerStart = BooleanProperty(False)
+    isTimerBackward = BooleanProperty(False)
 
     modes_string = ['Time', 'Date', 'Alarm', 'Temperature', 'Auto']
     _timeout = NumericProperty(3)
@@ -44,9 +51,8 @@ class TubesClock(EventDispatcher):
         self.bind(mode=self.on_change_mode)
         self.bind(btn1Press=self.on_btn1Press)
         self.bind(btn2Press=self.on_btn2Press)
-        self.bind(_alarmMM=self.on_alarmMM)
-        self.bind(_timeSS=self.on_timeSS)
-        self.bind(_dateYY=self.on_dateYY)
+        self.bind(saveTime=self.on_SaveTime)
+        self.bind(saveDate=self.on_SaveDate)
 
 
 # Get json-string from arduino
@@ -99,12 +105,12 @@ class TubesClock(EventDispatcher):
                 self._dateDD = self.nonZeroStr(self.parsed_string["dd"])
                 self._dateMM = self.nonZeroStr(self.parsed_string["mm"])
                 self._dateYY = self.nonZeroStr(self.parsed_string["yy"])
+                self._tC = str(self.parsed_string["tC"])
             except:
                 print("Not parse Json-string -", patched_content)
                 pass
 
     def set_arduino(self, str_):
-
         print(json.dumps(str_).encode('utf-8'))
         try:
             y = requests.put(self.url, timeout=5, data=json.dumps(str_).encode('utf-8'))
@@ -120,7 +126,7 @@ class TubesClock(EventDispatcher):
     def on_isLedsOn(self, instance, value):
         print('Leds Change')
         if self.isConnected:
-            if not value:                       # previos state
+            if value:                       # new state
                 self.set_string["led"] = 1
             else:
                 self.set_string["led"] = 0
@@ -129,7 +135,7 @@ class TubesClock(EventDispatcher):
     def on_isTubesOn(self, instance, value):
         print('Tubes Change')
         if self.isConnected:
-            if not value:
+            if value:
                 self.set_string["mode"] = 0
             else:
                 self.set_string["mode"] = 5
@@ -140,14 +146,16 @@ class TubesClock(EventDispatcher):
         if self.isConnected:
             if value:
                 self.set_string["isAl"] = "true"
-                self.set_string["tset"] = 0
+                # self.set_string["tset"] = 0
                 self.set_string["alSet"] = 1
-                self.set_string["mode"] = 2
+                # self.set_string["mode"] = 2
                 self.set_string["alHour"] = self._alarmHH
                 self.set_string["alMin"] = self._alarmMM
             else:
                 self.set_string["isAl"] = "false"
             self.set_arduino(self.set_string)
+            self.set_string["alSet"] = 0
+
 
     def on_change_mode(self, instance, value):
         print('Mode Change to - ', value)
@@ -175,16 +183,30 @@ class TubesClock(EventDispatcher):
         if self.isConnected:
             self.set_string["btn2"] = 1
             self.set_arduino(self.set_string)
-            self.set_string["btn1"] = 0
+            self.set_string["btn2"] = 0
 
-    def on_alarmMM(self, instance, value):
-        print("Save alarm in clock")
-        self.set_string["alHour"] = self._alarmHH
-        self.set_string["alMin"] = self._alarmMM
-
-    def on_timeSS(self, instance, value):
+    def on_SaveTime(self, instance, value):
         print('Save new time')
+        if self.isConnected:
+            self.set_string["hh"] = self._timeHH
+            self.set_string["min"] = self._timeMM
+            self.set_string["sec"] = self._timeSS
+            self.set_string["tset"] = 1
+            self.set_arduino(self.set_string)
+            self.set_string["tset"] = 0
+        else:
+            print("Error saving time")
 
-    def on_dateYY(self, instance, value):
+
+    def on_SaveDate(self, instance, value):
         print('Save new date')
+        if self.isConnected:
+            self.set_string["dd"] = self._dateDD
+            self.set_string["mm"] = self._dateMM
+            self.set_string["yy"] = self._dateYY
+            self.set_string["tset"] = 2
+            self.set_arduino(self.set_string)
+            self.set_string["tset"] = 0
+        else:
+            print("Error saving time")
 

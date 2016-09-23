@@ -7,11 +7,10 @@ from kivy.uix.tabbedpanel import TabbedPanel
 from kivy.uix.popup import Popup
 from kivy.uix.label import Label
 from kivy.lang import Builder
-from kivy.properties import (StringProperty, BooleanProperty, ListProperty)
+from kivy.properties import (StringProperty, BooleanProperty, NumericProperty, ListProperty)
 from kivy.uix.floatlayout import FloatLayout
-
 from tubesClock import TubesClock
-
+from kivy.clock import Clock
 
 __author__ = 'Makeev K.P.'
 
@@ -112,6 +111,16 @@ Builder.load_string("""
                 Switch:
                     id: _sw3
                     # on_active: app.changeSW3(_sw3.active)
+                Label:
+                    text: '°C'
+                    font_size: '22dp'
+                Label:
+                    text: ''
+                Label:
+                    text: ''
+                Label:
+                    id: _tC
+                    text: _myFl._tC
 
             Label:
                 #color: (1,0,0,1)
@@ -175,7 +184,7 @@ Builder.load_string("""
                 Button:
                     id: _bt1
                     text: 'BT1'
-                    background_color: (1,0,0,1)
+                    # background_color: (1,0,0,1)
                     size_hint: (1, 1)
                     # pos_hint: {'x': 0.0, 'y': 0.0}
                     font_size: 40
@@ -183,7 +192,7 @@ Builder.load_string("""
                 Button:
                     id: _bt2
                     text: 'BT2'
-                    background_color: (1,0,0,1)
+                    # background_color: (1,0,0,1)
                     size_hint: (1, 1)
                     #pos_hint: {'x': 1, 'y': 1}
                     font_size: 40
@@ -195,10 +204,73 @@ Builder.load_string("""
                 pos_hint: {'x': 0.03, 'y': 0.007}
 
 
-
     TabbedPanelItem:
         id: 'Advanced'
         text: 'Advanced'
+        MyAdvancedFloatLayout:
+            id: _myAdFl
+            size_hint: (1, 1)
+            pos_hint: {'x': 0, 'y': 0}
+            Label:
+                # color: (1,0,0,1)
+                text: 'Timer'
+                size_hint: (0.1, 0.08)
+                pos_hint: {'x': 0.1, 'y': 0.91}
+                font_size: '40dp'
+            GridLayout:
+                cols: 3
+                size_hint: (0.7, 0.2)
+                pos_hint: {'x': 0.15, 'y': 0.5}
+                spacing: 1
+                Label:
+                    text: 'Hours'
+                    font_size: '22dp'
+                Label:
+                    text: 'Minutes'
+                    font_size: '22dp'
+                Label:
+                    text: 'Seconds'
+                    font_size: '22dp'
+                Label:
+                    text: _myAdFl._timerHH
+                    font_size: '50dp'
+                Label:
+                    text: _myAdFl._timerMM
+                    font_size: '50dp'
+                Label:
+                    text: _myAdFl._timerSS
+                    font_size: '50dp'
+            GridLayout:
+                cols: 1
+                size_hint: (1, 0.3)
+                spacing: 4
+                pos_hint: {'x': 0, 'y': 0.03}
+                Button:
+                    id: _bt1
+                    text: _myAdFl.action
+                    # background_color: (1,0,0,1)
+                    size_hint: (1, 1)
+                    font_size: '40dp'
+                    on_press: app.timerStart()
+                Button:
+                    id: _bt2
+                    text: 'Reset'
+                    # background_color: (1,0,0,1)
+                    size_hint: (1, 1)
+                    font_size: '40dp'
+                    on_press: app.timerReset()
+                Button:
+                    id: _bt3
+                    text: 'Backward'
+                    # background_color: (1,0,0,1)
+                    size_hint: (1, 1)
+                    font_size: '40dp'
+                    on_press: app.timerBackward()
+            Label:
+                text: _myFl.status
+                size_hint: (0.2, 0.02)
+                font_size: '10dp'
+                pos_hint: {'x': 0.03, 'y': 0.007}
 
     Popup:
         id: popupSetTime
@@ -368,8 +440,66 @@ class MyFloatLayout(FloatLayout):
     _time = StringProperty("[ref=time]--:--:--[/ref]")
     _date = StringProperty('[ref=time]--/--/--[/ref]')
     _alarm = StringProperty('[ref=time]--:--[/ref]')
+    _tC = StringProperty('--')
 
 
+class MyAdvancedFloatLayout(FloatLayout):
+
+    def __init__(self, *args, **kwargs):
+        super(MyAdvancedFloatLayout, self).__init__(*args, **kwargs)
+
+    _timerHH = StringProperty("00")
+    _timerMM = StringProperty("00")
+    _timerSS = StringProperty("00")
+    action = StringProperty("Start")
+    backward = BooleanProperty(False)
+
+
+    def oneSec(self, dt):
+        if not self.backward:
+            second = int(self._timerSS) + 1
+            minutes = int(self._timerMM)
+            hours = int(self._timerHH)
+            if second == 60:
+                second = 0
+                minutes += 1
+                a1 = minutes // 10
+                a2 = minutes % 10
+                self._timerMM = str(a1) + str(a2)
+                if minutes == 60:
+                    hours += 1
+                    a1 = hours // 10
+                    a2 = hours % 10
+                    self._timerHH = str(a1) + str(a2)
+            a1 = second // 10
+            a2 = second % 10
+            self._timerSS = str(a1) + str(a2)
+        else:
+            second = int(self._timerSS) - 1
+            minutes = int(self._timerMM)
+            hours = int(self._timerHH)
+            if second == -1:
+                second = 59
+                minutes -= 1
+                if minutes == -1:
+                    minutes = 59
+                    hours -= 1
+                    if hours == -1:
+                        hours = 99
+                    a1 = hours // 10
+                    a2 = hours % 10
+                    self._timerHH = str(a1) + str(a2)
+                a1 = minutes // 10
+                a2 = minutes % 10
+                self._timerMM = str(a1) + str(a2)
+            a1 = second // 10
+            a2 = second % 10
+            self._timerSS = str(a1) + str(a2)
+
+    def reset(self):
+        self._timerHH = "00"
+        self._timerMM = "00"
+        self._timerSS = "00"
 
 class ClockApp(App):
     _panel = TBPanel()
@@ -399,6 +529,7 @@ class ClockApp(App):
             self._panel.ids["_myFl"]._time = '[ref=time]' + _time + '[/ref]'
             _date = self._tubes._dateDD + '/' + self._tubes._dateMM + '/' + self._tubes._dateYY
             self._panel.ids["_myFl"]._date = '[ref=time]' + _date + '[/ref]'
+            self._panel.ids["_myFl"]._tC = self._tubes._tC
             self._panel.ids["_myFl"].status = 'Connected'
             self._panel.ids["_myFl"].color_text = [1, 1, 1, 1]
         else:
@@ -435,9 +566,9 @@ class ClockApp(App):
     def changeSW1(self, instance,value):
         print("SWitch 1 change", value)
         if value:
-            self._tubes.isTubesOn = 0
+            self._tubes.isTubesOn = True
         else:
-            self._tubes.isTubesOn = 5
+            self._tubes.isTubesOn = False
 
     def changeSW2(self, instance, value):
         print("SWitch 2 change", value)
@@ -492,7 +623,7 @@ class ClockApp(App):
 
     def changeSp(self, value):
         print('Select ', value)
-        year = [str(x) for x in range(16, 50, 1)]
+        year = [str(x) for x in range(00, 50, 1)]
         self._panel.ids["_date_year"].values = tuple(year)
         if self._panel.ids["_date_month"].text == '--':
             mm = 1
@@ -515,46 +646,70 @@ class ClockApp(App):
 
 
     def saveTime(self):
-        if self.isConnected:
+        if self._tubes.isConnected:
             self._tubes._timeHH = self._panel.ids["_time_hours"].text
             self._tubes._timeMM = self._panel.ids["_time_minutes"].text
             self._tubes._timeSS = self._panel.ids["_time_seconds"].text
             _time = self._tubes._timeHH + ':' + self._tubes._timeMM + ':' + self._tubes._timeSS
             self._panel.ids["_myFl"]._time = '[ref=time]' + _time + '[/ref]'
             print('Save Time - ', self._panel.ids["_myFl"]._time)
+            self._tubes.saveTime = not self._tubes.saveTime
         else:
             print('Time not saved')
         self._panel.ids["popupSetTime"].dismiss()
 
     def saveDate(self):
-        if self.isConnected:
+        if self._tubes.isConnected:
             self._tubes._dateDD = self._panel.ids["_date_day"].text
             self._tubes._dateMM = self._panel.ids["_date_month"].text
             self._tubes._dateYY = self._panel.ids["_date_year"].text
             _date = self._tubes._dateDD + '/' + self._tubes._dateMM + '/' + self._tubes._dateYY
             self._panel.ids["_myFl"]._date = '[ref=date]' + _date + '[/ref]'
             print('Save Date - ', self._panel.ids["_myFl"]._date)
+            self._tubes.saveDate = not self._tubes.saveDate
         else:
             print('Date not saved')
         self._panel.ids["popupSetDate"].dismiss()
 
     def saveAlarm(self):
-        if self.isConnected:
-            print('Save Alarm')
-            self._tubes._alarmHH = self._panel.ids["_time_hours_alarm"].text
-            self._tubes._alarmMM = self._panel.ids["_time_minutes_alarm"].text
-            _alarm = self._tubes._alarmHH + ':' + self._tubes._alarmMM
-            self._panel.ids["_myFl"]._alarm = '[ref=alarm]' + _alarm + '[/ref]'
-            self._panel.ids["_sw3"].active = True
+        if self._tubes.isConnected:
+            if self._panel.ids["_time_hours_alarm"].text != '--' and self._panel.ids["_time_minutes_alarm"].text != '--':
+                print('Save Alarm')
+                self._tubes._alarmHH = self._panel.ids["_time_hours_alarm"].text
+                self._tubes._alarmMM = self._panel.ids["_time_minutes_alarm"].text
+                _alarm = self._tubes._alarmHH + ':' + self._tubes._alarmMM
+                self._panel.ids["_myFl"]._alarm = '[ref=alarm]' + _alarm + '[/ref]'
+                self._panel.ids["_sw3"].active = True
+                self._panel.ids["popupSetAlarm"].dismiss()
+            else:
+                pass
         else:
             print('Alarm not turned On')
-        self._panel.ids["popupSetAlarm"].dismiss()
+            self._panel.ids["popupSetAlarm"].dismiss()
 
     def button1Pressed(self):
         self._tubes.btn1Press = not self._tubes.btn1Press
 
     def button2Pressed(self):
-        self._tubes.btn1Press = not self._tubes.btn1Press
+        self._tubes.btn2Press = not self._tubes.btn2Press
+
+    def timerStart(self):
+        if not self._tubes.isTimerStart:
+            Clock.schedule_interval(self._panel.ids["_myAdFl"].oneSec, 1)
+            self._panel.ids["_myAdFl"].action = 'Stop'
+            self._tubes.isTimerStart = True
+        else:
+            Clock.unschedule(self._panel.ids["_myAdFl"].oneSec)
+            self._panel.ids["_myAdFl"].action = 'Start'
+            self._tubes.isTimerStart = False
+
+    def timerReset(self):
+        self._panel.ids["_myAdFl"].reset()
+
+    def timerBackward(self):
+        self._tubes.isTimerBackward = not self._tubes.isTimerBackward
+        self._panel.ids["_myAdFl"].backward = self._tubes.isTimerBackward
+
 
     def on_pause(self):
 
