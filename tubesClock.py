@@ -31,6 +31,9 @@ class TubesClock(EventDispatcher):
 
     isTimerStart = BooleanProperty(False)
     isTimerBackward = BooleanProperty(False)
+    _timerHH = StringProperty("0")
+    _timerMM = StringProperty("0")
+    _timerSS = StringProperty("0")
 
     modes_string = ['Time', 'Date', 'Alarm', 'Temperature', 'Auto']
     _timeout = NumericProperty(3)
@@ -53,6 +56,8 @@ class TubesClock(EventDispatcher):
         self.bind(btn2Press=self.on_btn2Press)
         self.bind(saveTime=self.on_SaveTime)
         self.bind(saveDate=self.on_SaveDate)
+        self.bind(isTimerStart=self.on_isTimerStart)
+        self.bind(isTimerBackward=self.on_isTimerBackward)
 
 
 # Get json-string from arduino
@@ -89,7 +94,7 @@ class TubesClock(EventDispatcher):
                     self.isLedsOn = True
                 else:
                     self.isLedsOn = False
-                if self.set_string["mode"] != 5:
+                if self.set_string["mode"] != 6:
                     self.isTubesOn = True
                 else:
                     self.isTubesOn = False
@@ -138,7 +143,7 @@ class TubesClock(EventDispatcher):
             if value:
                 self.set_string["mode"] = 0
             else:
-                self.set_string["mode"] = 5
+                self.set_string["mode"] = 6
             self.set_arduino(self.set_string)
 
     def on_isAlarmOn(self, instance, value):
@@ -156,6 +161,43 @@ class TubesClock(EventDispatcher):
             self.set_arduino(self.set_string)
             self.set_string["alSet"] = 0
 
+    def on_isTimerStart(self, instance, value):
+        print("Timer On change - ", value)
+        if self.isConnected:
+            if value:
+                self.set_string["isT"] = value
+                self.set_string["tBd"] = self.isTimerBackward
+                self.set_string["tHH"] = self._timerHH
+                self.set_string["tMM"] = self._timerMM
+                self.set_string["tSS"] = self._timerSS
+                self.set_string["mode"] = 5
+                self.set_arduino(self.set_string)
+                del self.set_string["tBd"]
+                del self.set_string["tHH"]
+                del self.set_string["tMM"]
+                del self.set_string["tSS"]
+                self.set_string["isT"] = "true"
+                # self.set_string["isT"] = "true"
+                # self.set_string["isT"] = "true"
+            else:
+                self.set_string["isT"] = value
+                self.set_arduino(self.set_string)
+                del self.set_string["isT"]
+
+
+
+    def on_isTimerBackward(self, instance, value):
+        print("TimerBackward  On change - ", value)
+        if self.isConnected:
+            if value:
+                self.set_string["tBd"] = "true"
+                # self.set_string["isT"] = "true"
+                # self.set_string["isT"] = "true"
+                # self.set_string["isT"] = "true"
+            else:
+                self.set_string["tBd"] = "false"
+            self.set_arduino(self.set_string)
+            del self.set_string["tBd"]
 
     def on_change_mode(self, instance, value):
         print('Mode Change to - ', value)

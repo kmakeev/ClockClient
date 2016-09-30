@@ -37,43 +37,13 @@ Builder.load_string("""
                 size_hint: (0.1, 0.08)
                 pos_hint: {'x': 0.1, 'y': 0.91}
                 font_size: '40dp'
-            Button:
-                id: btn
-                text: '-----'
-                on_release: _dropdown.open(self)
-                # size_hint_y: None
+            Spinner:
+                id:_change_mode
                 size_hint: (0.94, 0.07)
                 pos_hint: {'x': 0.03, 'y': 0.82}
+                text: '-----'
+                values: ('Time', 'Date', 'Alarm', 'Temperature', 'Auto')
                 height: '48dp'
-            DropDown:
-                id: _dropdown
-                on_parent: self.dismiss()
-                # on_select: app.change_mode(args[1])
-                Button:
-                    text: 'Time'
-                    size_hint_y: None
-                    height: '48dp'
-                    on_release: _dropdown.select(self.text)
-                Button:
-                    text: 'Date'
-                    size_hint_y: None
-                    height: '48dp'
-                    on_release: _dropdown.select(self.text)
-                Button:
-                    text: 'Alarm'
-                    size_hint_y: None
-                    height: '48dp'
-                    on_release: _dropdown.select(self.text)
-                Button:
-                    text: 'Temperature'
-                    size_hint_y: None
-                    height: '48dp'
-                    on_release: _dropdown.select(self.text)
-                Button:
-                    text: 'Auto'
-                    size_hint_y: None
-                    height: '48dp'
-                    on_release: _dropdown.select(self.text)
             GridLayout:
                 cols: 4
                 size_hint: (1, 0.3)
@@ -112,7 +82,7 @@ Builder.load_string("""
                     id: _sw3
                     # on_active: app.changeSW3(_sw3.active)
                 Label:
-                    text: '°C'
+                    text: 'Temperature'
                     font_size: '22dp'
                 Label:
                     text: ''
@@ -224,13 +194,13 @@ Builder.load_string("""
                 spacing: 1
                 Label:
                     text: 'Hours'
-                    font_size: '22dp'
+                    font_size: '20dp'
                 Label:
                     text: 'Minutes'
-                    font_size: '22dp'
+                    font_size: '20dp'
                 Label:
                     text: 'Seconds'
-                    font_size: '22dp'
+                    font_size: '20dp'
                 Label:
                     text: _myAdFl._timerHH
                     font_size: '50dp'
@@ -455,52 +425,6 @@ class MyAdvancedFloatLayout(FloatLayout):
     backward = BooleanProperty(False)
 
 
-    def oneSec(self, dt):
-        if not self.backward:
-            second = int(self._timerSS) + 1
-            minutes = int(self._timerMM)
-            hours = int(self._timerHH)
-            if second == 60:
-                second = 0
-                minutes += 1
-                a1 = minutes // 10
-                a2 = minutes % 10
-                self._timerMM = str(a1) + str(a2)
-                if minutes == 60:
-                    hours += 1
-                    a1 = hours // 10
-                    a2 = hours % 10
-                    self._timerHH = str(a1) + str(a2)
-            a1 = second // 10
-            a2 = second % 10
-            self._timerSS = str(a1) + str(a2)
-        else:
-            second = int(self._timerSS) - 1
-            minutes = int(self._timerMM)
-            hours = int(self._timerHH)
-            if second == -1:
-                second = 59
-                minutes -= 1
-                if minutes == -1:
-                    minutes = 59
-                    hours -= 1
-                    if hours == -1:
-                        hours = 99
-                    a1 = hours // 10
-                    a2 = hours % 10
-                    self._timerHH = str(a1) + str(a2)
-                a1 = minutes // 10
-                a2 = minutes % 10
-                self._timerMM = str(a1) + str(a2)
-            a1 = second // 10
-            a2 = second % 10
-            self._timerSS = str(a1) + str(a2)
-
-    def reset(self):
-        self._timerHH = "00"
-        self._timerMM = "00"
-        self._timerSS = "00"
-
 class ClockApp(App):
     _panel = TBPanel()
     content = ''
@@ -540,7 +464,8 @@ class ClockApp(App):
         self._panel.ids["_sw1"].bind(active=self.changeSW1)
         self._panel.ids["_sw2"].bind(active=self.changeSW2)
         self._panel.ids["_sw3"].bind(active=self.changeSW3)
-        self._panel.ids["_dropdown"].bind(on_select=self.change_mode)
+        # self._panel.ids["_dropdown"].bind(on_select=self.change_mode)
+        self._panel.ids["_change_mode"].bind(text=self.change_mode)
 
         return _panel
 
@@ -588,9 +513,8 @@ class ClockApp(App):
             self._panel.ids["_myFl"]._alarm = '[ref=time]--:--[/ref]'
 
     def change_mode(self, instance, value):
-        print('DropDown change - ', value)
+        print('Spiner change - ', value)
         self._tubes.mode = value
-        self._panel.ids["btn"].text = value
 
     def press_time(self, value):
         print('Time pressed', value)
@@ -614,25 +538,26 @@ class ClockApp(App):
         else:
             mm = self._panel.ids["_date_month"].text
         if self._panel.ids["_date_year"].text == '--':
-            yy = 16
+            yy = 2000
         else:
-            yy = self._panel.ids["_date_year"].text
+            yy = int("20" + self._panel.ids["_date_year"].text)
         day = [self._tubes.nonZeroStr(x) for x in range(1, calendar.monthrange(int(yy), int(mm))[1] + 1, 1)]
         self._panel.ids["_date_day"].values = tuple(day)
         self._panel.ids["popupSetDate"].open()
 
     def changeSp(self, value):
         print('Select ', value)
-        year = [str(x) for x in range(00, 50, 1)]
+        year = [str(x) for x in range(16, 50, 1)]
         self._panel.ids["_date_year"].values = tuple(year)
         if self._panel.ids["_date_month"].text == '--':
             mm = 1
         else:
             mm = self._panel.ids["_date_month"].text
         if self._panel.ids["_date_year"].text == '--':
-            yy = 16
+            yy = 2000
         else:
-            yy = self._panel.ids["_date_year"].text
+            yy = int("20" + self._panel.ids["_date_year"].text)
+        print(mm, yy)
         day = [self._tubes.nonZeroStr(x) for x in range(1, calendar.monthrange(int(yy), int(mm))[1] + 1, 1)]
         self._panel.ids["_date_day"].values = tuple(day)
         dd = self._panel.ids["_date_day"].text
@@ -695,20 +620,74 @@ class ClockApp(App):
 
     def timerStart(self):
         if not self._tubes.isTimerStart:
-            Clock.schedule_interval(self._panel.ids["_myAdFl"].oneSec, 1)
+            Clock.schedule_interval(self.oneSec, 1)
             self._panel.ids["_myAdFl"].action = 'Stop'
+            self._tubes._timerHH = self._panel.ids["_myAdFl"]._timerHH
+            self._tubes._timerMM = self._panel.ids["_myAdFl"]._timerMM
+            self._tubes._timerSS = self._panel.ids["_myAdFl"]._timerSS
             self._tubes.isTimerStart = True
+
         else:
-            Clock.unschedule(self._panel.ids["_myAdFl"].oneSec)
+            Clock.unschedule(self.oneSec)
             self._panel.ids["_myAdFl"].action = 'Start'
             self._tubes.isTimerStart = False
 
     def timerReset(self):
-        self._panel.ids["_myAdFl"].reset()
+        self.reset()
 
     def timerBackward(self):
         self._tubes.isTimerBackward = not self._tubes.isTimerBackward
         self._panel.ids["_myAdFl"].backward = self._tubes.isTimerBackward
+
+    def oneSec(self, dt):
+        if not self._panel.ids["_myAdFl"].backward:
+            second = int(self._panel.ids["_myAdFl"]._timerSS) + 1
+            minutes = int(self._panel.ids["_myAdFl"]._timerMM)
+            hours = int(self._panel.ids["_myAdFl"]._timerHH)
+            if second == 60:
+                second = 0
+                minutes += 1
+                a1 = minutes // 10
+                a2 = minutes % 10
+                self._panel.ids["_myAdFl"]._timerMM = str(a1) + str(a2)
+                if minutes == 60:
+                    hours += 1
+                    a1 = hours // 10
+                    a2 = hours % 10
+                    self._panel.ids["_myAdFl"]._timerHH = str(a1) + str(a2)
+            a1 = second // 10
+            a2 = second % 10
+            self._panel.ids["_myAdFl"]._timerSS = str(a1) + str(a2)
+        else:
+            second = int(self._panel.ids["_myAdFl"]._timerSS) - 1
+            minutes = int(self._panel.ids["_myAdFl"]._timerMM)
+            hours = int(self._panel.ids["_myAdFl"]._timerHH)
+            if second == -1:
+                second = 59
+                minutes -= 1
+                if minutes == -1:
+                    minutes = 59
+                    hours -= 1
+                    if hours == -1:
+                        hours = 99
+                    a1 = hours // 10
+                    a2 = hours % 10
+                    self._panel.ids["_myAdFl"]._timerHH = str(a1) + str(a2)
+                a1 = minutes // 10
+                a2 = minutes % 10
+                self._panel.ids["_myAdFl"]._timerMM = str(a1) + str(a2)
+            a1 = second // 10
+            a2 = second % 10
+            self._panel.ids["_myAdFl"]._timerSS = str(a1) + str(a2)
+
+    def reset(self):
+        self._panel.ids["_myAdFl"]._timerHH = "00"
+        self._panel.ids["_myAdFl"]._timerMM = "00"
+        self._panel.ids["_myAdFl"]._timerSS = "00"
+        self._tubes._timerHH = self._panel.ids["_myAdFl"]._timerHH
+        self._tubes._timerMM = self._panel.ids["_myAdFl"]._timerMM
+        self._tubes._timerSS = self._panel.ids["_myAdFl"]._timerSS
+        # self._tubes.isTimerStart = True
 
 
     def on_pause(self):
