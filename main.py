@@ -42,7 +42,7 @@ Builder.load_string("""
                 size_hint: (0.94, 0.07)
                 pos_hint: {'x': 0.03, 'y': 0.82}
                 text: '-----'
-                values: ('Time', 'Date', 'Alarm', 'Temperature', 'Auto')
+                values: ('Time', 'Date', 'Alarm', 'Temperature', 'Timer', 'Auto')
                 height: '48dp'
             GridLayout:
                 cols: 4
@@ -82,7 +82,7 @@ Builder.load_string("""
                     id: _sw3
                     # on_active: app.changeSW3(_sw3.active)
                 Label:
-                    text: 'Temperature'
+                    text: 'Temp.'
                     font_size: '22dp'
                 Label:
                     text: ''
@@ -176,7 +176,7 @@ Builder.load_string("""
 
     TabbedPanelItem:
         id: 'Advanced'
-        text: 'Advanced'
+        text: 'Timer'
         MyAdvancedFloatLayout:
             id: _myAdFl
             size_hint: (1, 1)
@@ -187,6 +187,13 @@ Builder.load_string("""
                 size_hint: (0.1, 0.08)
                 pos_hint: {'x': 0.1, 'y': 0.91}
                 font_size: '40dp'
+            Spinner:
+                id:_change_time
+                size_hint: (0.94, 0.07)
+                pos_hint: {'x': 0.03, 'y': 0.82}
+                text: '-----'
+                values: ('1 min.', '5 min.', '10 min.', '30 min.', '1 hour', '2 hours')
+                height: '48dp'
             GridLayout:
                 cols: 3
                 size_hint: (0.7, 0.2)
@@ -466,6 +473,7 @@ class ClockApp(App):
         self._panel.ids["_sw3"].bind(active=self.changeSW3)
         # self._panel.ids["_dropdown"].bind(on_select=self.change_mode)
         self._panel.ids["_change_mode"].bind(text=self.change_mode)
+        self._panel.ids["_change_time"].bind(text=self.change_time)
 
         return _panel
 
@@ -490,31 +498,68 @@ class ClockApp(App):
 
     def changeSW1(self, instance,value):
         print("SWitch 1 change", value)
-        if value:
-            self._tubes.isTubesOn = True
-        else:
-            self._tubes.isTubesOn = False
+        self._tubes.isTubesOn = value
 
     def changeSW2(self, instance, value):
         print("SWitch 2 change", value)
-        if value:
-            self._tubes.isLedsOn = True
-        else:
-            self._tubes.isLedsOn = False
+        self._tubes.isLedsOn = value
+
 
     def changeSW3(self, instance, value):
         print("SWitch 3 change", value)
-        if value:
-            self._tubes.isAlarmOn = True
-            _alarm = self._tubes._alarmHH + ':' + self._tubes._alarmMM
-            self._panel.ids["_myFl"]._alarm = '[ref=time]' + _alarm + '[/ref]'
-        else:
-            self._tubes.isAlarmOn = False
-            self._panel.ids["_myFl"]._alarm = '[ref=time]--:--[/ref]'
+        if self._panel.ids["_time_hours_alarm"].text != '--' and self._panel.ids["_time_minutes_alarm"].text != '--':
+            if value:
+                self._tubes.isAlarmOn = True
+                _alarm = self._tubes._alarmHH + ':' + self._tubes._alarmMM
+                self._panel.ids["_myFl"]._alarm = '[ref=time]' + _alarm + '[/ref]'
+            else:
+                self._tubes.isAlarmOn = False
+                self._panel.ids["_myFl"]._alarm = '[ref=time]--:--[/ref]'
 
     def change_mode(self, instance, value):
-        print('Spiner change - ', value)
+        print('Spiner mode change - ', value)
         self._tubes.mode = value
+
+    def change_time(self, instance, value):
+        print('Value timer change to - ', value)
+        # values: ('1 min.', '5 min.', '10 min.', '30 min.', '1 hour', '2 hours')
+        if value == '1 min.':
+            self._panel.ids["_myAdFl"]._timerHH = "00"
+            self._panel.ids["_myAdFl"]._timerMM = "01"
+            self._panel.ids["_myAdFl"]._timerSS = "00"
+            self._tubes._timerHH = self._panel.ids["_myAdFl"]._timerHH
+            self._tubes._timerMM = self._panel.ids["_myAdFl"]._timerMM
+            self._tubes._timerSS = self._panel.ids["_myAdFl"]._timerSS
+        elif value == '5 min.':
+            self._panel.ids["_myAdFl"]._timerHH = "00"
+            self._panel.ids["_myAdFl"]._timerMM = "05"
+            self._panel.ids["_myAdFl"]._timerSS = "00"
+            self._tubes._timerHH = self._panel.ids["_myAdFl"]._timerHH
+            self._tubes._timerMM = self._panel.ids["_myAdFl"]._timerMM
+            self._tubes._timerSS = self._panel.ids["_myAdFl"]._timerSS
+        elif value == '10 min.':
+            self._panel.ids["_myAdFl"]._timerHH = "00"
+            self._panel.ids["_myAdFl"]._timerMM = "10"
+            self._panel.ids["_myAdFl"]._timerSS = "00"
+            self._tubes._timerHH = self._panel.ids["_myAdFl"]._timerHH
+            self._tubes._timerMM = self._panel.ids["_myAdFl"]._timerMM
+            self._tubes._timerSS = self._panel.ids["_myAdFl"]._timerSS
+        elif value == '30 min.':
+            self._panel.ids["_myAdFl"]._timerHH = "00"
+            self._panel.ids["_myAdFl"]._timerMM = "30"
+            self._panel.ids["_myAdFl"]._timerSS = "00"
+            self._tubes._timerHH = self._panel.ids["_myAdFl"]._timerHH
+            self._tubes._timerMM = self._panel.ids["_myAdFl"]._timerMM
+            self._tubes._timerSS = self._panel.ids["_myAdFl"]._timerSS
+        elif value == '2 hours':
+            self._panel.ids["_myAdFl"]._timerHH = "02"
+            self._panel.ids["_myAdFl"]._timerMM = "00"
+            self._panel.ids["_myAdFl"]._timerSS = "00"
+            self._tubes._timerHH = self._panel.ids["_myAdFl"]._timerHH
+            self._tubes._timerMM = self._panel.ids["_myAdFl"]._timerMM
+            self._tubes._timerSS = self._panel.ids["_myAdFl"]._timerSS
+
+
 
     def press_time(self, value):
         print('Time pressed', value)
@@ -604,7 +649,11 @@ class ClockApp(App):
                 self._tubes._alarmMM = self._panel.ids["_time_minutes_alarm"].text
                 _alarm = self._tubes._alarmHH + ':' + self._tubes._alarmMM
                 self._panel.ids["_myFl"]._alarm = '[ref=alarm]' + _alarm + '[/ref]'
-                self._panel.ids["_sw3"].active = True
+                if self._panel.ids["_sw3"].active:
+                    self._panel.ids["_sw3"].active = False
+                    self._panel.ids["_sw3"].active = True
+                else:
+                    self._panel.ids["_sw3"].active = True
                 self._panel.ids["popupSetAlarm"].dismiss()
             else:
                 pass

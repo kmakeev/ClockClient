@@ -22,6 +22,7 @@ class TubesClock(EventDispatcher):
     isTubesOn = BooleanProperty(False)
     isAlarmOn = BooleanProperty(False)
     mode = StringProperty('Auto')
+    #timerValue = StringProperty('----')
 
     btn1Press = BooleanProperty(False)
     btn2Press = BooleanProperty(False)
@@ -35,7 +36,7 @@ class TubesClock(EventDispatcher):
     _timerMM = StringProperty("0")
     _timerSS = StringProperty("0")
 
-    modes_string = ['Time', 'Date', 'Alarm', 'Temperature', 'Auto']
+    modes_string = ['Time', 'Date', 'Alarm', 'Temperature', 'Timer', 'Auto']
     _timeout = NumericProperty(3)
     content = ''
     parsed_string = {}
@@ -52,6 +53,7 @@ class TubesClock(EventDispatcher):
         self.bind(isLedsOn=self.on_isLedsOn)
         self.bind(isAlarmOn=self.on_isAlarmOn)
         self.bind(mode=self.on_change_mode)
+        # self.bind(timerValue=self.on_change_timerValue)
         self.bind(btn1Press=self.on_btn1Press)
         self.bind(btn2Press=self.on_btn2Press)
         self.bind(saveTime=self.on_SaveTime)
@@ -159,7 +161,12 @@ class TubesClock(EventDispatcher):
             else:
                 self.set_string["isAl"] = "false"
             self.set_arduino(self.set_string)
-            self.set_string["alSet"] = 0
+            if "alSet" in self.set_string:
+                del self.set_string["alSet"]
+            if "alHour" in self.set_string:
+                del self.set_string["alHour"]
+            if "alMin" in self.set_string:
+                del self.set_string["alMin"]
 
     def on_isTimerStart(self, instance, value):
         print("Timer On change - ", value)
@@ -176,7 +183,7 @@ class TubesClock(EventDispatcher):
                 del self.set_string["tHH"]
                 del self.set_string["tMM"]
                 del self.set_string["tSS"]
-                self.set_string["isT"] = "true"
+                # self.set_string["isT"] = "true"
                 # self.set_string["isT"] = "true"
                 # self.set_string["isT"] = "true"
             else:
@@ -202,15 +209,19 @@ class TubesClock(EventDispatcher):
     def on_change_mode(self, instance, value):
         print('Mode Change to - ', value)
         if self.isConnected:
-            if value == self.modes_string[4]:
+            if value == self.modes_string[5]:
                 self.set_string["m_a"] = "true"
                 self.set_string["mode"] = 0
+            elif value == self.modes_string[4]:
+                self.set_string["m_a"] = "false"
+                self.set_string["mode"] = 5
             else:
                 self.set_string["m_a"] = "false"
                 self.set_string["mode"] = self.modes_string.index(value)
             self.set_string["tset"] = 0
             self.set_string["alSet"] = 0
             self.set_arduino(self.set_string)
+
 
     def on_btn1Press(self, instance, value):
         print("Button 1 pressed")
